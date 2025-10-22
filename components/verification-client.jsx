@@ -83,7 +83,7 @@ export default function VerificationClient({ user, profile }) {
         .from("profiles")
         .update({
           verification_pending: true,
-          verification_pending_until: pendingUntil.toISOString(),
+          verification_pending_at: pendingUntil.toISOString(),
         })
         .eq("id", user.id)
 

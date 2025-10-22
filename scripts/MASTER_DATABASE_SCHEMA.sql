@@ -763,8 +763,101 @@ CREATE TRIGGER on_auth_user_created
 -- Enable real-time for chat messages
 ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
 
+-- Enable real-time for leaderboard updates
+ALTER PUBLICATION supabase_realtime ADD TABLE public.leaderboard;
+
 -- ============================================================================
--- 19. INITIAL DATA SETUP
+-- 19. AUTO-APPROVE VERIFICATION AFTER 3 MINUTES
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.auto_approve_verification()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Update profiles where verification is pending and time has passed
+  UPDATE public.profiles
+  SET 
+    verification_pending = false,
+    is_verified = true,
+    verification_completed_at = NOW(),
+    updated_at = NOW()
+  WHERE 
+    verification_pending = true 
+    AND verification_pending_until IS NOT NULL
+    AND verification_pending_until <= NOW();
+  
+  -- Create notifications for approved users
+  INSERT INTO public.notifications (user_id, type, title, message)
+  SELECT 
+    id,
+    'verification_approved',
+    'Verification Approved! ✅',
+    'Congratulations! Your verification has been approved. You now have a verification badge!'
+  FROM public.profiles
+  WHERE 
+    verification_pending = false 
+    AND is_verified = true
+    AND verification_completed_at >= NOW() - INTERVAL '1 minute';
+END;
+$$;
+
+-- ============================================================================
+-- 20. VERIFICATION CARDS SYSTEM
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.verification_cards (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  card_level INTEGER NOT NULL CHECK (card_level >= 1 AND card_level <= 5),
+  card_type TEXT NOT NULL, -- 'blue', 'green', 'purple', 'red', 'golden'
+  card_name TEXT NOT NULL, -- 'Billions Blue Card', 'Billions Green Card', etc.
+  verification_data JSONB NOT NULL, -- Stores verification results
+  earned_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.verification_cards ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can view own cards"
+  ON public.verification_cards FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own cards"
+  ON public.verification_cards FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Index for performance
+CREATE INDEX IF NOT EXISTS idx_verification_cards_user_id ON public.verification_cards(user_id);
+CREATE INDEX IF NOT EXISTS idx_verification_cards_level ON public.verification_cards(card_level);
+
+-- ============================================================================
+-- 21. CARD VERIFICATION DIFFICULTY SETTINGS
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.card_difficulty_settings (
+  card_level INTEGER PRIMARY KEY CHECK (card_level >= 1 AND card_level <= 5),
+  card_type TEXT NOT NULL,
+  card_name TEXT NOT NULL,
+  math_questions INTEGER NOT NULL DEFAULT 5,
+  quiz_questions INTEGER NOT NULL DEFAULT 5,
+  touch_duration_seconds INTEGER NOT NULL DEFAULT 3,
+  voice_phrases TEXT[] NOT NULL DEFAULT ARRAY['Say: I am a verified human'],
+  unlocked_at_level INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert difficulty settings for each card level
+INSERT INTO public.card_difficulty_settings (card_level, card_type, card_name, math_questions, quiz_questions, touch_duration_seconds, voice_phrases, unlocked_at_level) VALUES
+(1, 'blue', 'Billions Blue Card', 5, 5, 3, ARRAY['Say: I am a verified human'], 1),
+(2, 'green', 'Billions Green Card', 8, 8, 5, ARRAY['Say: I am a verified human', 'Say: Billions Gaming Hub is amazing'], 2),
+(3, 'purple', 'Billions Purple Card', 12, 12, 8, ARRAY['Say: I am a verified human', 'Say: Billions Gaming Hub is amazing', 'Say: I love playing games'], 3),
+(4, 'red', 'Billions Red Card', 15, 15, 12, ARRAY['Say: I am a verified human', 'Say: Billions Gaming Hub is amazing', 'Say: I love playing games', 'Say: I am a gaming champion'], 4),
+(5, 'golden', 'Billions Golden Card', 20, 20, 15, ARRAY['Say: I am a verified human', 'Say: Billions Gaming Hub is amazing', 'Say: I love playing games', 'Say: I am a gaming champion', 'Say: I am the ultimate Billions player'], 5)
+ON CONFLICT (card_level) DO NOTHING;
+
+-- ============================================================================
+-- 22. INITIAL DATA SETUP
 -- ============================================================================
 
 -- Create initial leaderboard entries for existing users

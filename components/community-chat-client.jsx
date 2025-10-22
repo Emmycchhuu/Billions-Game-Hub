@@ -140,6 +140,43 @@ export default function CommunityChatClient({ user, profile, activeBan }) {
 
     if (!newMessage.trim() || isSending || !canSendMessage) return
 
+    // Check if user is currently banned
+    const { data: currentBan } = await supabase
+      .from("chat_bans")
+      .select("*")
+      .eq("user_id", user.id)
+      .gt("banned_until", new Date().toISOString())
+      .single()
+
+    if (currentBan) {
+      playSound("lose")
+      setError("You are currently banned from the chat. Please try again later.")
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 3000)
+      return
+    }
+
+    // Check rate limit from database
+    const { data: rateLimit } = await supabase
+      .from("chat_rate_limits")
+      .select("last_message_at")
+      .eq("user_id", user.id)
+      .single()
+
+    if (rateLimit) {
+      const lastMessageTime = new Date(rateLimit.last_message_at)
+      const timeSinceLastMessage = Date.now() - lastMessageTime.getTime()
+      const oneMinute = 60 * 1000
+
+      if (timeSinceLastMessage < oneMinute) {
+        const remainingSeconds = Math.ceil((oneMinute - timeSinceLastMessage) / 1000)
+        playSound("lose")
+        setError(`Please wait ${remainingSeconds} seconds before sending another message.`)
+        return
+      }
+    }
+
     if (containsBannedWord(newMessage)) {
       playSound("lose")
       setError("Your message contains inappropriate language. Please keep the chat respectful.")
@@ -317,7 +354,13 @@ export default function CommunityChatClient({ user, profile, activeBan }) {
                       </div>
                       {msg.is_verified && (
                         <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5">
-                          <ShieldCheck className="w-3 h-3 text-white" />
+                          <Image
+                            src="/images/verified.png"
+                            alt="Verified"
+                            width={12}
+                            height={12}
+                            className="w-3 h-3"
+                          />
                         </div>
                       )}
                     </div>

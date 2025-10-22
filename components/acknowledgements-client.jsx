@@ -9,10 +9,10 @@ import Image from "next/image"
 
 const contributors = [
   {
-    name: "Hizzy",
-    role: "Project Advisor and Contributor",
+    name: "Big_D",
+    role: "Project Core Contributor Advisor and Contributor",
     image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/8537d420-23af-4338-b703-34b7661427e1-qRsR2JNpJhjEiiErJ8WxMdLeM4023U.jpeg",
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/36469ee8-e098-417f-9e15-4c7f6c09e4b2-Q0Qwd5qbpEWlTMD6a2EKUxZGfld9we.jpeg",
     color: "from-blue-500 to-cyan-500",
     badge: "💙",
   },
@@ -25,10 +25,10 @@ const contributors = [
     badge: "💙",
   },
   {
-    name: "Big_D",
-    role: "Project Core Contributor",
+    name: "Hizzy",
+    role: "Project Advisor and Contributo",
     image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/36469ee8-e098-417f-9e15-4c7f6c09e4b2-Q0Qwd5qbpEWlTMD6a2EKUxZGfld9we.jpeg",
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/8537d420-23af-4338-b703-34b7661427e1-qRsR2JNpJhjEiiErJ8WxMdLeM4023U.jpeg",
     color: "from-orange-500 to-amber-500",
     badge: "💙",
   },

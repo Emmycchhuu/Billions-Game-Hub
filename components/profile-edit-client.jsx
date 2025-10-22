@@ -61,6 +61,7 @@ export default function ProfileEditClient({ user, profile }) {
       const { data, error } = await supabase.storage.from("profile-pictures").upload(filePath, file, {
         cacheControl: "3600",
         upsert: true,
+        contentType: file.type,
       })
 
       if (error) {

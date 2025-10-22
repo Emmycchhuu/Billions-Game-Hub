@@ -174,7 +174,13 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                         </div>
                         {player.is_verified && (
                           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-500 rounded-full p-1">
-                            <ShieldCheck className="w-5 h-5 text-white" />
+                            <Image
+                              src="/images/verified.png"
+                              alt="Verified"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
                           </div>
                         )}
                       </div>
@@ -248,7 +254,13 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                             </div>
                             {player.is_verified && (
                               <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5">
-                                <ShieldCheck className="w-4 h-4 text-white" />
+                                <Image
+                                  src="/images/verified.png"
+                                  alt="Verified"
+                                  width={16}
+                                  height={16}
+                                  className="w-4 h-4"
+                                />
                               </div>
                             )}
                           </div>

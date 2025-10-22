@@ -355,6 +355,42 @@ export default function DashboardClient({ user, profile: initialProfile, topPlay
           </div>
         </div>
 
+        {/* Card Verification Section */}
+        {profile?.is_verified && (
+          <div className="mt-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-100">Verification Cards</h2>
+              <Link href="/verification/cards">
+                <Button
+                  variant="outline"
+                  className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 bg-transparent"
+                  onMouseEnter={() => playSound("hover")}
+                >
+                  View All Cards
+                </Button>
+              </Link>
+            </div>
+            <Card className="bg-slate-900/50 backdrop-blur-xl border-purple-500/20">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+                    🎴
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-100 mb-2">Earn Verification Cards</h3>
+                  <p className="text-slate-400 mb-4">
+                    Complete advanced verification challenges to earn exclusive Billions Gaming Hub cards
+                  </p>
+                  <Link href="/verification/cards">
+                    <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white">
+                      Start Card Verification
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="mt-12">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-slate-100">Top Players</h2>

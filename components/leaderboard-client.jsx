@@ -13,13 +13,13 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
   const [activeTab, setActiveTab] = useState("leaderboard")
   const [rankingMode, setRankingMode] = useState("points")
 
-  const userRank = leaderboard?.findIndex((p) => p.id === user.id) + 1 || 0
+  const userRank = leaderboard?.findIndex((p) => p.user_id === user.id) + 1 || 0
 
   const sortedLeaderboard = [...(leaderboard || [])].sort((a, b) => {
     if (rankingMode === "referrals") {
       return (b.referral_count || 0) - (a.referral_count || 0)
     }
-    return (b.points || b.total_points || 0) - (a.points || a.total_points || 0)
+    return (b.total_points || 0) - (a.total_points || 0)
   })
 
   const top100 = sortedLeaderboard.slice(0, 100)
@@ -190,7 +190,7 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                     <CardContent className="text-center">
                       {rankingMode === "points" ? (
                         <>
-                          <p className={`text-4xl font-bold ${color}`}>{player.points || player.total_points}</p>
+                          <p className={`text-4xl font-bold ${color}`}>{player.total_points || 0}</p>
                           <p className="text-slate-400 text-sm mt-1">points</p>
                           <p className="text-slate-500 text-xs mt-2">Level {player.level || 1}</p>
                         </>
@@ -198,7 +198,7 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                         <>
                           <p className={`text-4xl font-bold ${color}`}>{player.referral_count || 0}</p>
                           <p className="text-slate-400 text-sm mt-1">referrals</p>
-                          <p className="text-slate-500 text-xs mt-2">{player.points || 0} points</p>
+                          <p className="text-slate-500 text-xs mt-2">{player.total_points || 0} points</p>
                         </>
                       )}
                     </CardContent>
@@ -228,7 +228,7 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                       <div
                         key={player.id}
                         className={`flex items-center justify-between p-4 rounded-lg transition-all hover:scale-[1.02] ${
-                          player.id === user.id
+                          player.user_id === user.id
                             ? "bg-cyan-500/20 border border-cyan-500/50 animate-pulse-glow"
                             : "bg-slate-800/50 hover:bg-slate-800/70"
                         }`}
@@ -266,10 +266,10 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                           </div>
                           <div>
                             <p
-                              className={`font-semibold ${player.id === user.id ? "text-cyan-400" : "text-slate-100"}`}
+                              className={`font-semibold ${player.user_id === user.id ? "text-cyan-400" : "text-slate-100"}`}
                             >
                               {player.username}
-                              {player.id === user.id && (
+                              {player.user_id === user.id && (
                                 <span className="ml-2 text-xs bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded">You</span>
                               )}
                             </p>
@@ -279,7 +279,7 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                               </p>
                             ) : (
                               <p className="text-sm text-slate-400">
-                                {player.points || 0} points • Level {player.level || 1}
+                                {player.total_points || 0} points • Level {player.level || 1}
                               </p>
                             )}
                           </div>
@@ -287,7 +287,7 @@ export default function LeaderboardClient({ user, profile, leaderboard, gameSess
                         <div className="text-right">
                           {rankingMode === "points" ? (
                             <>
-                              <p className="text-2xl font-bold text-cyan-400">{player.points || player.total_points}</p>
+                              <p className="text-2xl font-bold text-cyan-400">{player.total_points || 0}</p>
                               <p className="text-xs text-slate-400">points</p>
                             </>
                           ) : (

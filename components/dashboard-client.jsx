@@ -232,16 +232,14 @@ export default function DashboardClient({ user, profile: initialProfile, topPlay
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                {profile?.avatar_url && (
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-cyan-500/50">
-                    <Image
-                      src={profile.avatar_url || "/placeholder.svg"}
-                      alt={profile.username}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-cyan-500/50">
+                  <Image
+                    src={profile?.avatar_url || "/images/avatar-1.jpeg"}
+                    alt={profile?.username || "User"}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-100">{profile?.username || "Agent"}</p>
                   <p className="text-sm text-slate-400">{user.email}</p>

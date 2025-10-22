@@ -168,12 +168,32 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
         </div>
 
         <div className="text-center mb-12">
+          <div className="relative mb-8">
+            <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-4xl font-bold shadow-2xl mb-6 animate-pulse">
+              🎴
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl"></div>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-4">
             Verification Cards
           </h1>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Complete verification challenges to earn exclusive Billions Gaming Hub cards
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto mb-6">
+            Complete advanced verification challenges to earn exclusive Billions Gaming Hub cards
           </p>
+          <div className="flex justify-center gap-4 text-sm text-slate-500">
+            <span className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Progressive Difficulty
+            </span>
+            <span className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              Personalized Cards
+            </span>
+            <span className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              Social Sharing
+            </span>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -186,11 +206,11 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
             return (
               <Card
                 key={cardData.level}
-                className={`bg-slate-900/80 backdrop-blur-xl border-2 transition-all duration-300 ${
+                className={`bg-slate-900/80 backdrop-blur-xl border-2 transition-all duration-300 group ${
                   userCard 
-                    ? 'border-green-500/50 hover:border-green-500' 
+                    ? 'border-green-500/50 hover:border-green-500 shadow-green-500/20 shadow-lg' 
                     : canAttempt 
-                    ? 'border-purple-500/50 hover:border-purple-500 hover:scale-105' 
+                    ? 'border-purple-500/50 hover:border-purple-500 hover:scale-105 shadow-purple-500/20 shadow-lg' 
                     : 'border-slate-700/50 opacity-60'
                 }`}
               >
@@ -294,11 +314,50 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
         </div>
 
         {userCards && userCards.length > 0 && (
-          <div className="mt-12 text-center">
-            <h2 className="text-2xl font-bold text-slate-100 mb-4">Your Card Collection</h2>
-            <p className="text-slate-400">
-              You have earned {userCards.length} out of 5 verification cards!
-            </p>
+          <div className="mt-12">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-100 mb-4">Your Card Collection</h2>
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="text-3xl font-bold text-green-400">{userCards.length}</div>
+                <div className="text-slate-400">/ 5 cards earned</div>
+                <div className="w-32 bg-slate-700 rounded-full h-3">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-500"
+                    style={{ width: `${(userCards.length / 5) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-5 gap-4 max-w-4xl mx-auto">
+              {cardTypes.map((cardData) => {
+                const userCard = getUserCardLevel(cardData.level)
+                return (
+                  <div key={cardData.level} className="text-center">
+                    <div className={`w-16 h-10 mx-auto rounded-lg overflow-hidden border-2 ${
+                      userCard ? 'border-green-500' : 'border-slate-700'
+                    }`}>
+                      {userCard ? (
+                        <Image
+                          src={`/images/${cardData.type} card.jpg`}
+                          alt={cardData.name}
+                          width={64}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                          <span className="text-xs text-slate-500">{cardData.level}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      {userCard ? 'Earned' : `Level ${cardData.level}`}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
       </div>

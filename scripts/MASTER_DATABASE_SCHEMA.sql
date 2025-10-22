@@ -766,6 +766,34 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
 -- Enable real-time for leaderboard updates
 ALTER PUBLICATION supabase_realtime ADD TABLE public.leaderboard;
 
+-- Create Storage bucket for profile pictures (if it doesn't exist)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'profile-pictures',
+  'profile-pictures', 
+  true,
+  5242880, -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Set up Storage policies for profile pictures
+CREATE POLICY "Users can upload their own profile pictures" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can update their own profile pictures" ON storage.objects
+FOR UPDATE TO authenticated
+USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can delete their own profile pictures" ON storage.objects
+FOR DELETE TO authenticated
+USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Profile pictures are publicly viewable" ON storage.objects
+FOR SELECT TO public
+USING (bucket_id = 'profile-pictures');
+
 -- ============================================================================
 -- 19. AUTO-APPROVE VERIFICATION AFTER 3 MINUTES
 -- ============================================================================

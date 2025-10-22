@@ -54,9 +54,23 @@ export default function ProfileEditClient({ user, profile }) {
     try {
       const supabase = createClient()
 
+      // Check if bucket exists
+      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
+      if (bucketError) {
+        console.error("Error checking buckets:", bucketError)
+        throw new Error("Storage not accessible")
+      }
+
+      const profileBucket = buckets?.find(b => b.name === "profile-pictures")
+      if (!profileBucket) {
+        throw new Error("Profile pictures bucket not found. Please create it in Supabase Storage.")
+      }
+
       const fileExt = file.name.split(".").pop()
       const fileName = `${user.id}-${Date.now()}.${fileExt}`
       const filePath = `${user.id}/${fileName}`
+
+      console.log("Uploading file:", { fileName, filePath, fileType: file.type, fileSize: file.size })
 
       const { data, error } = await supabase.storage.from("profile-pictures").upload(filePath, file, {
         cacheControl: "3600",
@@ -65,22 +79,22 @@ export default function ProfileEditClient({ user, profile }) {
       })
 
       if (error) {
-        console.error("[v0] Upload error:", error)
-        throw error
+        console.error("Upload error:", error)
+        throw new Error(`Upload failed: ${error.message}`)
       }
 
       const {
         data: { publicUrl },
       } = supabase.storage.from("profile-pictures").getPublicUrl(filePath)
 
-      console.log("[v0] Image uploaded successfully:", publicUrl)
+      console.log("Image uploaded successfully:", publicUrl)
       setUploadedImage(publicUrl)
       setSelectedAvatar(publicUrl)
       playSound("win")
       setMessage("Image uploaded successfully!")
     } catch (error) {
-      console.error("[v0] Upload error:", error)
-      setMessage("Error uploading image. Please try again.")
+      console.error("Upload error:", error)
+      setMessage(`Error uploading image: ${error.message}`)
       playSound("lose")
     } finally {
       setIsUploading(false)
@@ -181,10 +195,14 @@ export default function ProfileEditClient({ user, profile }) {
                 <div className="flex items-center justify-center">
                   <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/50">
                     <Image
-                      src={selectedAvatar || "/placeholder.svg"}
+                      src={selectedAvatar || "/images/avatar-1.jpeg"}
                       alt="Profile picture"
                       fill
                       className="object-cover"
+                      onError={(e) => {
+                        console.log("Image failed to load, using fallback")
+                        e.target.src = "/images/avatar-1.jpeg"
+                      }}
                     />
                   </div>
                 </div>

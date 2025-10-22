@@ -74,32 +74,29 @@ export default function VerificationClient({ user, profile }) {
     if (allPassed) {
       setIsPending(true)
 
-      // Calculate pending until time (2-3 minutes random)
-      const pendingMinutes = Math.floor(Math.random() * 2) + 2 // 2-3 minutes
-      const pendingUntil = new Date(Date.now() + pendingMinutes * 60 * 1000)
-
-      // Update profile with pending state
+      // Update profile with verified state immediately
       await supabase
         .from("profiles")
         .update({
-          verification_pending: true,
-          verification_pending_at: pendingUntil.toISOString(),
+          verification_pending: false,
+          is_verified: true,
+          verification_completed_at: new Date().toISOString(),
         })
         .eq("id", user.id)
 
-      // Send pending notification
+      // Send approval notification
       await supabase.from("notifications").insert({
         user_id: user.id,
-        type: "verification_pending",
-        title: "Verification Pending ⏳",
-        message: `Your verification is being processed. This usually takes ${pendingMinutes} minutes. You'll be notified once approved!`,
+        type: "verification_approved",
+        title: "🎉 Verification Approved!",
+        message: "Congratulations! You are now a verified human! You can now access verification cards.",
       })
 
       playSound("win")
 
       // Wait for the display message (show for 3 seconds)
       setTimeout(() => {
-        router.push("/dashboard?verification=pending")
+        router.push("/dashboard?verified=true")
       }, 3000)
     } else {
       // Increment attempts

@@ -14,8 +14,8 @@ export default async function LeaderboardPage() {
 
   // Fetch leaderboard data
   const { data: leaderboard } = await supabase
-    .from("profiles")
-    .select("id, username, total_points, created_at")
+    .from("leaderboard")
+    .select("user_id, username, display_name, avatar_url, total_points, level, referral_count, is_verified, rank, referral_rank")
     .order("total_points", { ascending: false })
     .limit(100)
 

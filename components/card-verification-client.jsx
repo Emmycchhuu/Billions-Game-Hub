@@ -14,6 +14,18 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
   const router = useRouter()
   const [selectedCard, setSelectedCard] = useState(null)
   const [isGeneratingCard, setIsGeneratingCard] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Add error boundary
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('Card verification error:', error)
+      setError('Something went wrong. Please try again.')
+    }
+
+    window.addEventListener('error', handleError)
+    return () => window.removeEventListener('error', handleError)
+  }, [])
 
   const cardTypes = [
     { level: 1, type: 'blue', name: 'Billions Blue Card', color: 'from-blue-500 to-cyan-500' },
@@ -50,7 +62,7 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
       const baseImage = new Image()
       baseImage.crossOrigin = 'anonymous'
       
-      return new Promise((resolve, reject) => {
+      const result = await new Promise((resolve, reject) => {
         baseImage.onload = () => {
           try {
             // Draw the base card image
@@ -83,7 +95,13 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
             ctx.fillText(`Earned: ${new Date().toLocaleDateString()}`, canvas.width / 2, 350)
 
             // Convert canvas to blob
-            canvas.toBlob(resolve, 'image/png')
+            canvas.toBlob((blob) => {
+              if (blob) {
+                resolve(blob)
+              } else {
+                reject(new Error('Failed to generate card image'))
+              }
+            }, 'image/png')
           } catch (error) {
             reject(error)
           }
@@ -102,6 +120,8 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
         
         baseImage.src = `/images/${imageName}`
       })
+      
+      return result
     } catch (error) {
       console.error('Error generating card:', error)
       throw error
@@ -112,6 +132,7 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
 
   const downloadCard = async (cardData) => {
     try {
+      setError(null)
       const blob = await generateCardImage(cardData)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -124,12 +145,15 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
       playSound('win')
     } catch (error) {
       console.error('Error downloading card:', error)
+      setError('Failed to download card. Please try again.')
       playSound('lose')
     }
   }
 
   const shareToTwitter = async (cardData) => {
-    const tweetText = `🎮 I just earned my Level ${cardData.level} ${cardData.name} from Billions Gaming Hub! 
+    try {
+      setError(null)
+      const tweetText = `🎮 I just earned my Level ${cardData.level} ${cardData.name} from Billions Gaming Hub! 
 
 Join me and play, connect, win, climb leaderboards and dominate! 
 
@@ -139,9 +163,14 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
 
 #BillionsGamingHub #Gaming #Verification`
 
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
-    window.open(twitterUrl, '_blank')
-    playSound('click')
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
+      window.open(twitterUrl, '_blank')
+      playSound('click')
+    } catch (error) {
+      console.error('Error sharing card:', error)
+      setError('Failed to share card. Please try again.')
+      playSound('lose')
+    }
   }
 
   const startCardVerification = (cardData) => {
@@ -195,6 +224,21 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
             </span>
           </div>
         </div>
+
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
+              <p className="text-red-400">{error}</p>
+              <Button 
+                onClick={() => setError(null)} 
+                variant="outline" 
+                className="mt-2 border-red-500/50 text-red-400 hover:bg-red-500/10"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {cardTypes.map((cardData) => {

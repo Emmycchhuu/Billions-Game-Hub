@@ -127,6 +127,10 @@ export default function ProfileEditClient({ user, profile }) {
     } else {
       setMessage("Profile updated successfully!")
       playSound("win")
+      
+      // Force refresh of profile data across the app
+      window.location.reload()
+      
       setTimeout(() => {
         router.push("/dashboard")
       }, 1500)

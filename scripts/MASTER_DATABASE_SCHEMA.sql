@@ -767,32 +767,60 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.leaderboard;
 
 -- Create Storage bucket for profile pictures (if it doesn't exist)
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'profile-pictures',
-  'profile-pictures', 
-  true,
-  5242880, -- 5MB limit
-  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-)
-ON CONFLICT (id) DO NOTHING;
+-- Note: This requires the bucket to be created manually in Supabase Dashboard
+-- Go to Storage > Create Bucket > Name: profile-pictures > Public: true
+DO $$
+BEGIN
+  -- Try to create the bucket, but don't fail if it already exists
+  BEGIN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'profile-pictures',
+      'profile-pictures', 
+      true,
+      5242880, -- 5MB limit
+      ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    );
+  EXCEPTION
+    WHEN unique_violation THEN
+      -- Bucket already exists, that's fine
+      NULL;
+    WHEN OTHERS THEN
+      -- Other errors, log but don't fail
+      RAISE NOTICE 'Could not create storage bucket: %', SQLERRM;
+  END;
+END $$;
 
--- Set up Storage policies for profile pictures
-CREATE POLICY "Users can upload their own profile pictures" ON storage.objects
-FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- Set up Storage policies for profile pictures (with IF NOT EXISTS handling)
+DO $$
+BEGIN
+  -- Drop existing policies if they exist
+  DROP POLICY IF EXISTS "Users can upload their own profile pictures" ON storage.objects;
+  DROP POLICY IF EXISTS "Users can update their own profile pictures" ON storage.objects;
+  DROP POLICY IF EXISTS "Users can delete their own profile pictures" ON storage.objects;
+  DROP POLICY IF EXISTS "Profile pictures are publicly viewable" ON storage.objects;
+  
+  -- Create new policies
+  CREATE POLICY "Users can upload their own profile pictures" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
 
-CREATE POLICY "Users can update their own profile pictures" ON storage.objects
-FOR UPDATE TO authenticated
-USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
+  CREATE POLICY "Users can update their own profile pictures" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
 
-CREATE POLICY "Users can delete their own profile pictures" ON storage.objects
-FOR DELETE TO authenticated
-USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
+  CREATE POLICY "Users can delete their own profile pictures" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (bucket_id = 'profile-pictures' AND auth.uid()::text = (storage.foldername(name))[1]);
 
-CREATE POLICY "Profile pictures are publicly viewable" ON storage.objects
-FOR SELECT TO public
-USING (bucket_id = 'profile-pictures');
+  CREATE POLICY "Profile pictures are publicly viewable" ON storage.objects
+  FOR SELECT TO public
+  USING (bucket_id = 'profile-pictures');
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Could not create storage policies: %', SQLERRM;
+END $$;
 
 -- ============================================================================
 -- 19. AUTO-APPROVE VERIFICATION AFTER 3 MINUTES

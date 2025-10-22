@@ -167,8 +167,14 @@ export default function CardVerificationLevelClient({ user, profile, cardLevel, 
         </div>
 
         <div className="text-center mb-12">
-          <div className={`w-32 h-32 mx-auto rounded-2xl bg-gradient-to-br ${currentCard.color} flex items-center justify-center text-white text-4xl font-bold shadow-2xl mb-6`}>
-            {cardLevel}
+          <div className="w-48 h-32 mx-auto rounded-2xl overflow-hidden border-4 border-slate-700 shadow-2xl mb-6">
+            <Image
+              src={`/images/${currentCard.type} card.jpg`}
+              alt={currentCard.name}
+              width={192}
+              height={128}
+              className="w-full h-full object-cover"
+            />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-4">
             {currentCard.name}
@@ -257,3 +263,4 @@ export default function CardVerificationLevelClient({ user, profile, cardLevel, 
     </div>
   )
 }
+

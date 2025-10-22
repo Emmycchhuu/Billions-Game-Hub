@@ -40,60 +40,67 @@ export default function CardVerificationClient({ user, profile, userCards, diffi
     setIsGeneratingCard(true)
     
     try {
-      // Create canvas to generate card image
+      // Create canvas to generate personalized card image
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
       canvas.width = 800
       canvas.height = 500
 
-      // Card background gradient
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
-      gradient.addColorStop(0, cardData.type === 'blue' ? '#3B82F6' : 
-                          cardData.type === 'green' ? '#10B981' :
-                          cardData.type === 'purple' ? '#8B5CF6' :
-                          cardData.type === 'red' ? '#EF4444' : '#F59E0B')
-      gradient.addColorStop(1, cardData.type === 'blue' ? '#06B6D4' : 
-                          cardData.type === 'green' ? '#059669' :
-                          cardData.type === 'purple' ? '#7C3AED' :
-                          cardData.type === 'red' ? '#DC2626' : '#D97706')
+      // Load the base card image
+      const baseImage = new Image()
+      baseImage.crossOrigin = 'anonymous'
+      
+      return new Promise((resolve, reject) => {
+        baseImage.onload = () => {
+          try {
+            // Draw the base card image
+            ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height)
 
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+            // Add personalized text overlay
+            ctx.fillStyle = '#FFFFFF'
+            ctx.strokeStyle = '#000000'
+            ctx.lineWidth = 3
 
-      // Add card border
-      ctx.strokeStyle = '#FFFFFF'
-      ctx.lineWidth = 8
-      ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8)
+            // Add username (larger, more prominent)
+            ctx.font = 'bold 36px Arial'
+            ctx.textAlign = 'center'
+            ctx.strokeText(profile.username, canvas.width / 2, 200)
+            ctx.fillText(profile.username, canvas.width / 2, 200)
 
-      // Add card title
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = 'bold 48px Arial'
-      ctx.textAlign = 'center'
-      ctx.fillText(cardData.name, canvas.width / 2, 80)
+            // Add verification badge text
+            ctx.font = 'bold 20px Arial'
+            ctx.strokeText('✓ VERIFIED HUMAN', canvas.width / 2, 250)
+            ctx.fillText('✓ VERIFIED HUMAN', canvas.width / 2, 250)
 
-      // Add username
-      ctx.font = 'bold 32px Arial'
-      ctx.fillText(profile.username, canvas.width / 2, 150)
+            // Add level
+            ctx.font = 'bold 28px Arial'
+            ctx.strokeText(`LEVEL ${cardData.level}`, canvas.width / 2, 300)
+            ctx.fillText(`LEVEL ${cardData.level}`, canvas.width / 2, 300)
 
-      // Add verification badge
-      ctx.font = 'bold 24px Arial'
-      ctx.fillText('✓ VERIFIED HUMAN', canvas.width / 2, 200)
+            // Add earned date
+            ctx.font = '18px Arial'
+            ctx.strokeText(`Earned: ${new Date().toLocaleDateString()}`, canvas.width / 2, 350)
+            ctx.fillText(`Earned: ${new Date().toLocaleDateString()}`, canvas.width / 2, 350)
 
-      // Add level
-      ctx.font = 'bold 36px Arial'
-      ctx.fillText(`LEVEL ${cardData.level}`, canvas.width / 2, 280)
+            // Convert canvas to blob
+            canvas.toBlob(resolve, 'image/png')
+          } catch (error) {
+            reject(error)
+          }
+        }
+        
+        baseImage.onerror = () => {
+          reject(new Error('Failed to load card image'))
+        }
 
-      // Add Billions Gaming Hub logo/text
-      ctx.font = 'bold 28px Arial'
-      ctx.fillText('BILLIONS GAMING HUB', canvas.width / 2, 350)
-
-      // Add earned date
-      ctx.font = '20px Arial'
-      ctx.fillText(`Earned: ${new Date().toLocaleDateString()}`, canvas.width / 2, 400)
-
-      // Convert canvas to blob
-      return new Promise((resolve) => {
-        canvas.toBlob(resolve, 'image/png')
+        // Set the image source based on card type
+        const imageName = cardData.type === 'blue' ? 'blue card.jpg' :
+                         cardData.type === 'green' ? 'green card.jpg' :
+                         cardData.type === 'purple' ? 'purple card.jpg' :
+                         cardData.type === 'red' ? 'red card.jpg' :
+                         'golden card.jpg'
+        
+        baseImage.src = `/images/${imageName}`
       })
     } catch (error) {
       console.error('Error generating card:', error)
@@ -189,13 +196,23 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
               >
                 <CardHeader className="text-center">
                   <div className="relative mx-auto mb-4">
-                    <div className={`w-24 h-24 mx-auto rounded-xl bg-gradient-to-br ${cardData.color} flex items-center justify-center text-white text-2xl font-bold shadow-lg`}>
+                    <div className="w-32 h-20 mx-auto rounded-lg overflow-hidden border-2 border-slate-700 shadow-lg">
                       {userCard ? (
-                        <CheckCircle2 className="w-12 h-12" />
+                        <Image
+                          src={`/images/${cardData.type} card.jpg`}
+                          alt={cardData.name}
+                          width={128}
+                          height={80}
+                          className="w-full h-full object-cover"
+                        />
                       ) : !isUnlocked ? (
-                        <Lock className="w-12 h-12" />
+                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                          <Lock className="w-8 h-8 text-slate-500" />
+                        </div>
                       ) : (
-                        cardData.level
+                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                          <span className="text-2xl font-bold text-slate-400">{cardData.level}</span>
+                        </div>
                       )}
                     </div>
                     {userCard && (
@@ -288,3 +305,4 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
     </div>
   )
 }
+

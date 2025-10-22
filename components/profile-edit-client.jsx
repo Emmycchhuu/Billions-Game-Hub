@@ -32,6 +32,31 @@ export default function ProfileEditClient({ user, profile }) {
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
 
+  const testStorageConnection = async () => {
+    try {
+      const supabase = createClient()
+      console.log("Testing storage connection...")
+      
+      // Test bucket access
+      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
+      console.log("Bucket list result:", { buckets, bucketError })
+      
+      if (bucketError) {
+        console.error("Bucket list error:", bucketError)
+        return false
+      }
+      
+      // Test specific bucket
+      const { data: files, error: filesError } = await supabase.storage.from("profile-pictures").list("", { limit: 1 })
+      console.log("Files list result:", { files, filesError })
+      
+      return !filesError
+    } catch (error) {
+      console.error("Storage test error:", error)
+      return false
+    }
+  }
+
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -51,6 +76,15 @@ export default function ProfileEditClient({ user, profile }) {
     setIsUploading(true)
     setMessage("")
 
+    // Test storage connection first
+    const storageWorking = await testStorageConnection()
+    if (!storageWorking) {
+      setMessage("Storage connection failed. Please check your Supabase setup.")
+      setIsUploading(false)
+      playSound("lose")
+      return
+    }
+
     try {
       const supabase = createClient()
 
@@ -58,13 +92,18 @@ export default function ProfileEditClient({ user, profile }) {
       const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
       if (bucketError) {
         console.error("Error checking buckets:", bucketError)
-        throw new Error("Storage not accessible")
+        throw new Error(`Storage not accessible: ${bucketError.message}`)
       }
 
+      console.log("Available buckets:", buckets)
+      
       const profileBucket = buckets?.find(b => b.name === "profile-pictures")
       if (!profileBucket) {
-        throw new Error("Profile pictures bucket not found. Please create it in Supabase Storage.")
+        console.error("Profile pictures bucket not found. Available buckets:", buckets?.map(b => b.name))
+        throw new Error("Profile pictures bucket not found. Please create it in Supabase Storage with name 'profile-pictures' and make it public.")
       }
+
+      console.log("Profile pictures bucket found:", profileBucket)
 
       const fileExt = file.name.split(".").pop()
       const fileName = `${user.id}-${Date.now()}.${fileExt}`

@@ -17,6 +17,7 @@ export default function CardVerificationLevelClient({ user, profile, cardLevel, 
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState(null)
   const [verificationData, setVerificationData] = useState({
     mathPassed: false,
     mathScore: 0,
@@ -27,6 +28,17 @@ export default function CardVerificationLevelClient({ user, profile, cardLevel, 
     voicePassed: false,
     voiceRecorded: false,
   })
+
+  // Add error boundary
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('Card verification level error:', error)
+      setError('Something went wrong. Please try again.')
+    }
+
+    window.addEventListener('error', handleError)
+    return () => window.removeEventListener('error', handleError)
+  }, [])
 
   const cardData = {
     1: { type: 'blue', name: 'Billions Blue Card', color: 'from-blue-500 to-cyan-500' },
@@ -67,78 +79,94 @@ export default function CardVerificationLevelClient({ user, profile, cardLevel, 
   ]
 
   const handleStepComplete = async (stepId, data) => {
-    const updatedData = { ...verificationData, ...data }
-    setVerificationData(updatedData)
-    playSound("win")
+    try {
+      setError(null)
+      const updatedData = { ...verificationData, ...data }
+      setVerificationData(updatedData)
+      playSound("win")
 
-    // Move to next step or complete verification
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
-    } else {
-      // All steps complete - save card to database
-      await completeCardVerification(updatedData)
+      // Move to next step or complete verification
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1)
+      } else {
+        // All steps complete - save card to database
+        await completeCardVerification(updatedData)
+      }
+    } catch (error) {
+      console.error('Error in step completion:', error)
+      setError('Failed to complete step. Please try again.')
+      playSound('lose')
     }
   }
 
   const completeCardVerification = async (data) => {
-    const supabase = createClient()
+    try {
+      setError(null)
+      const supabase = createClient()
 
-    // Check if all tests passed
-    const allPassed = data.mathPassed && data.quizPassed && data.touchPassed && data.voicePassed
+      // Check if all tests passed
+      const allPassed = data.mathPassed && data.quizPassed && data.touchPassed && data.voicePassed
 
-    if (allPassed) {
-      setIsPending(true)
+      if (allPassed) {
+        setIsPending(true)
 
-      // Save verification card
-      const { error: cardError } = await supabase.from("verification_cards").insert({
-        user_id: user.id,
-        card_level: cardLevel,
-        card_type: currentCard.type,
-        card_name: currentCard.name,
-        verification_data: {
-          math_score: data.mathScore,
-          quiz_score: data.quizScore,
-          touch_duration: data.touchDuration,
-          voice_recorded: data.voiceRecorded,
-          completed_at: new Date().toISOString(),
-        },
-      })
+        // Save verification card
+        const { error: cardError } = await supabase.from("verification_cards").insert({
+          user_id: user.id,
+          card_level: cardLevel,
+          card_type: currentCard.type,
+          card_name: currentCard.name,
+          verification_data: {
+            math_score: data.mathScore,
+            quiz_score: data.quizScore,
+            touch_duration: data.touchDuration,
+            voice_recorded: data.voiceRecorded,
+            completed_at: new Date().toISOString(),
+          },
+        })
 
-      if (cardError) {
-        console.error("Error saving card:", cardError)
+        if (cardError) {
+          console.error("Error saving card:", cardError)
+          setError('Failed to save card. Please try again.')
+          setIsPending(false)
+          return
+        }
+
+        // Send notification
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          type: "card_earned",
+          title: `🎉 ${currentCard.name} Earned!`,
+          message: `Congratulations! You've successfully earned your Level ${cardLevel} verification card!`,
+        })
+
+        playSound("win")
+
+        // Redirect to cards page after 3 seconds
+        setTimeout(() => {
+          router.push("/verification/cards")
+        }, 3000)
+      } else {
+        playSound("lose")
+        setError('Verification failed. Please complete all steps.')
         setIsPending(false)
-        return
-      }
-
-      // Send notification
-      await supabase.from("notifications").insert({
-        user_id: user.id,
-        type: "card_earned",
-        title: `🎉 ${currentCard.name} Earned!`,
-        message: `Congratulations! You've successfully earned your Level ${cardLevel} verification card!`,
-      })
-
-      playSound("win")
-
-      // Redirect to cards page after 3 seconds
-      setTimeout(() => {
-        router.push("/verification/cards")
-      }, 3000)
-    } else {
-      playSound("lose")
-      setIsPending(true)
       
-      // Send failure notification
-      await supabase.from("notifications").insert({
-        user_id: user.id,
-        type: "card_failed",
-        title: "Verification Failed",
-        message: `You didn't pass all the challenges for ${currentCard.name}. Try again!`,
-      })
+        // Send failure notification
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          type: "card_failed",
+          title: "Verification Failed",
+          message: `You didn't pass all the challenges for ${currentCard.name}. Try again!`,
+        })
 
-      setTimeout(() => {
-        router.push("/verification/cards")
-      }, 3000)
+        setTimeout(() => {
+          router.push("/verification/cards")
+        }, 3000)
+      }
+    } catch (error) {
+      console.error('Error completing card verification:', error)
+      setError('Failed to complete verification. Please try again.')
+      setIsPending(false)
     }
   }
 
@@ -217,6 +245,21 @@ export default function CardVerificationLevelClient({ user, profile, cardLevel, 
               )
             })}
           </div>
+
+          {error && (
+            <div className="max-w-2xl mx-auto mb-6">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
+                <p className="text-red-400">{error}</p>
+                <Button 
+                  onClick={() => setError(null)} 
+                  variant="outline" 
+                  className="mt-2 border-red-500/50 text-red-400 hover:bg-red-500/10"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          )}
 
           <Card className="bg-slate-900/80 backdrop-blur-xl border-purple-500/20">
             <CardHeader>

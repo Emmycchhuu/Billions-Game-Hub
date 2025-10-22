@@ -260,23 +260,46 @@ Use my referral code "${profile.referral_code}" to get 200 bonus points!
               >
                 <CardHeader className="text-center">
                   <div className="relative mx-auto mb-4">
-                    <div className="w-32 h-20 mx-auto rounded-lg overflow-hidden border-2 border-slate-700 shadow-lg">
+                    <div className="w-32 h-20 mx-auto rounded-lg overflow-hidden border-2 border-slate-700 shadow-lg relative">
                       {userCard ? (
-                        <Image
-                          src={`/images/${cardData.type} card.jpg`}
-                          alt={cardData.name}
-                          width={128}
-                          height={80}
-                          className="w-full h-full object-cover"
-                        />
+                        <>
+                          <Image
+                            src={`/images/${cardData.type} card.jpg`}
+                            alt={cardData.name}
+                            width={128}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                            <CheckCircle2 className="w-8 h-8 text-green-400" />
+                          </div>
+                        </>
                       ) : !isUnlocked ? (
-                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                          <Lock className="w-8 h-8 text-slate-500" />
-                        </div>
+                        <>
+                          <Image
+                            src={`/images/${cardData.type} card.jpg`}
+                            alt={cardData.name}
+                            width={128}
+                            height={80}
+                            className="w-full h-full object-cover opacity-30"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center">
+                            <Lock className="w-8 h-8 text-slate-500" />
+                          </div>
+                        </>
                       ) : (
-                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-slate-400">{cardData.level}</span>
-                        </div>
+                        <>
+                          <Image
+                            src={`/images/${cardData.type} card.jpg`}
+                            alt={cardData.name}
+                            width={128}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-purple-500/20 flex items-center justify-center">
+                            <span className="text-lg font-bold text-purple-400">START</span>
+                          </div>
+                        </>
                       )}
                     </div>
                     {userCard && (

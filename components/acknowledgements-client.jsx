@@ -12,7 +12,7 @@ const contributors = [
     name: "Big_D",
     role: "Project Core Contributor Advisor and Contributor",
     image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/36469ee8-e098-417f-9e15-4c7f6c09e4b2-Q0Qwd5qbpEWlTMD6a2EKUxZGfld9we.jpeg",
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/d8c58153-5645-453f-a756-506ae8aad3a5-UJPiEcaMoBYmRrB8Tkw0WKmLroZyg8.jpeg",
     color: "from-blue-500 to-cyan-500",
     badge: "💙",
   },
@@ -20,7 +20,7 @@ const contributors = [
     name: "Dvm",
     role: "Project Core Contributor",
     image:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/d8c58153-5645-453f-a756-506ae8aad3a5-UJPiEcaMoBYmRrB8Tkw0WKmLroZyg8.jpeg",
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/36469ee8-e098-417f-9e15-4c7f6c09e4b2-Q0Qwd5qbpEWlTMD6a2EKUxZGfld9we.jpeg",
     color: "from-pink-500 to-rose-500",
     badge: "💙",
   },

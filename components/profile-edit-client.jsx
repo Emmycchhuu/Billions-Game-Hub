@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, User, Upload, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Save, User, ShieldCheck } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Link from "next/link"
 import Image from "next/image"
@@ -24,121 +24,10 @@ const avatarOptions = [
 
 export default function ProfileEditClient({ user, profile }) {
   const router = useRouter()
-  const fileInputRef = useRef(null)
   const [username, setUsername] = useState(profile?.username || "")
   const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar_url || avatarOptions[0])
-  const [uploadedImage, setUploadedImage] = useState(null)
-  const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
-
-  const testStorageConnection = async () => {
-    try {
-      const supabase = createClient()
-      console.log("Testing storage connection...")
-      
-      // Test bucket access
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
-      console.log("Bucket list result:", { buckets, bucketError })
-      
-      if (bucketError) {
-        console.error("Bucket list error:", bucketError)
-        return false
-      }
-      
-      // Test specific bucket
-      const { data: files, error: filesError } = await supabase.storage.from("profile-pictures").list("", { limit: 1 })
-      console.log("Files list result:", { files, filesError })
-      
-      return !filesError
-    } catch (error) {
-      console.error("Storage test error:", error)
-      return false
-    }
-  }
-
-  const handleFileSelect = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith("image/")) {
-      setMessage("Please select an image file")
-      playSound("lose")
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage("Image must be less than 5MB")
-      playSound("lose")
-      return
-    }
-
-    setIsUploading(true)
-    setMessage("")
-
-    // Test storage connection first
-    const storageWorking = await testStorageConnection()
-    if (!storageWorking) {
-      setMessage("Storage connection failed. Please check your Supabase setup.")
-      setIsUploading(false)
-      playSound("lose")
-      return
-    }
-
-    try {
-      const supabase = createClient()
-
-      // Check if bucket exists
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
-      if (bucketError) {
-        console.error("Error checking buckets:", bucketError)
-        throw new Error(`Storage not accessible: ${bucketError.message}`)
-      }
-
-      console.log("Available buckets:", buckets)
-      
-      const profileBucket = buckets?.find(b => b.name === "profile-pictures")
-      if (!profileBucket) {
-        console.error("Profile pictures bucket not found. Available buckets:", buckets?.map(b => b.name))
-        throw new Error("Profile pictures bucket not found. Please create it in Supabase Storage with name 'profile-pictures' and make it public.")
-      }
-
-      console.log("Profile pictures bucket found:", profileBucket)
-
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
-      const filePath = `${user.id}/${fileName}`
-
-      console.log("Uploading file:", { fileName, filePath, fileType: file.type, fileSize: file.size })
-
-      const { data, error } = await supabase.storage.from("profile-pictures").upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: file.type,
-      })
-
-      if (error) {
-        console.error("Upload error:", error)
-        throw new Error(`Upload failed: ${error.message}`)
-      }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("profile-pictures").getPublicUrl(filePath)
-
-      console.log("Image uploaded successfully:", publicUrl)
-      setUploadedImage(publicUrl)
-      setSelectedAvatar(publicUrl)
-      playSound("win")
-      setMessage("Image uploaded successfully!")
-    } catch (error) {
-      console.error("Upload error:", error)
-      setMessage(`Error uploading image: ${error.message}`)
-      playSound("lose")
-    } finally {
-      setIsUploading(false)
-    }
-  }
 
   const handleSave = async () => {
     if (!username.trim()) {
@@ -166,10 +55,8 @@ export default function ProfileEditClient({ user, profile }) {
     } else {
       setMessage("Profile updated successfully!")
       playSound("win")
-      
-      // Force refresh of profile data across the app
+
       window.location.reload()
-      
       setTimeout(() => {
         router.push("/dashboard")
       }, 1500)
@@ -250,46 +137,25 @@ export default function ProfileEditClient({ user, profile }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    variant="outline"
-                    className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 bg-transparent"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isUploading ? "Uploading..." : "Upload Custom Picture"}
-                  </Button>
-                  <p className="text-xs text-slate-500 text-center">Max 5MB • JPG, PNG, GIF supported</p>
-                </div>
-
                 <div className="space-y-2">
-                  <Label className="text-slate-300 text-sm">Or choose a preset avatar:</Label>
+                  <Label className="text-slate-300 text-sm">Choose a preset avatar:</Label>
                   <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
                     {avatarOptions.map((avatar, index) => (
                       <button
                         key={index}
                         onClick={() => {
                           setSelectedAvatar(avatar)
-                          setUploadedImage(null)
                           playSound("click")
                         }}
                         onMouseEnter={() => playSound("hover")}
                         className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 ${
-                          selectedAvatar === avatar && !uploadedImage
+                          selectedAvatar === avatar
                             ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-slate-950 scale-110"
                             : "hover:scale-105 opacity-70 hover:opacity-100"
                         }`}
                       >
                         <Image
-                          src={avatar || "/placeholder.svg"}
+                          src={avatar}
                           alt={`Avatar ${index + 1}`}
                           fill
                           className="object-cover"
@@ -314,7 +180,7 @@ export default function ProfileEditClient({ user, profile }) {
 
               <Button
                 onClick={handleSave}
-                disabled={isSaving || isUploading}
+                disabled={isSaving}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-6 text-lg"
               >
                 <Save className="w-5 h-5 mr-2" />

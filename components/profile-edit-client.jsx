@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, User, Upload, ShieldCheck } from "lucide-react"
+import { ArrowLeft, Save, User, ShieldCheck } from "lucide-react"
 import { playSound } from "@/lib/sounds"
 import Link from "next/link"
 import Image from "next/image"
@@ -24,14 +24,12 @@ const avatarOptions = [
 
 export default function ProfileEditClient({ user, profile }) {
   const router = useRouter()
-  const fileInputRef = useRef(null)
   const [username, setUsername] = useState(profile?.username || "")
   const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar_url || avatarOptions[0])
-  const [uploadedImage, setUploadedImage] = useState(null)
-  const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
 
+<<<<<<< HEAD
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -101,6 +99,8 @@ export default function ProfileEditClient({ user, profile }) {
     }
   }
 
+=======
+>>>>>>> f592035ea2e8db219b52c855dd87cdd8a7c97fcd
   const handleSave = async () => {
     if (!username.trim()) {
       setMessage("Username cannot be empty")
@@ -127,10 +127,8 @@ export default function ProfileEditClient({ user, profile }) {
     } else {
       setMessage("Profile updated successfully!")
       playSound("win")
-      
-      // Force refresh of profile data across the app
+
       window.location.reload()
-      
       setTimeout(() => {
         router.push("/dashboard")
       }, 1500)
@@ -211,46 +209,25 @@ export default function ProfileEditClient({ user, profile }) {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    variant="outline"
-                    className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 bg-transparent"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isUploading ? "Uploading..." : "Upload Custom Picture"}
-                  </Button>
-                  <p className="text-xs text-slate-500 text-center">Max 5MB • JPG, PNG, GIF supported</p>
-                </div>
-
                 <div className="space-y-2">
-                  <Label className="text-slate-300 text-sm">Or choose a preset avatar:</Label>
+                  <Label className="text-slate-300 text-sm">Choose a preset avatar:</Label>
                   <div className="grid grid-cols-4 md:grid-cols-7 gap-4">
                     {avatarOptions.map((avatar, index) => (
                       <button
                         key={index}
                         onClick={() => {
                           setSelectedAvatar(avatar)
-                          setUploadedImage(null)
                           playSound("click")
                         }}
                         onMouseEnter={() => playSound("hover")}
                         className={`relative aspect-square rounded-xl overflow-hidden transition-all duration-300 ${
-                          selectedAvatar === avatar && !uploadedImage
+                          selectedAvatar === avatar
                             ? "ring-4 ring-purple-500 ring-offset-4 ring-offset-slate-950 scale-110"
                             : "hover:scale-105 opacity-70 hover:opacity-100"
                         }`}
                       >
                         <Image
-                          src={avatar || "/placeholder.svg"}
+                          src={avatar}
                           alt={`Avatar ${index + 1}`}
                           fill
                           className="object-cover"
@@ -275,7 +252,7 @@ export default function ProfileEditClient({ user, profile }) {
 
               <Button
                 onClick={handleSave}
-                disabled={isSaving || isUploading}
+                disabled={isSaving}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-6 text-lg"
               >
                 <Save className="w-5 h-5 mr-2" />

@@ -205,36 +205,24 @@ export default function QuizGame({ user, profile }) {
     playSound("lose")
     setShowResult(true)
     setIsCorrect(false)
-
-    setTimeout(() => {
-      moveToNextQuestion()
-    }, 2000)
+    setTimeout(() => moveToNextQuestion(), 2000)
   }
 
   const handleAnswerSelect = (answerIndex) => {
     if (showResult || selectedAnswer !== null) return
-
     playSound("click")
     setSelectedAnswer(answerIndex)
-
     const question = shuffledQuestions[currentQuestion]
     const correct = answerIndex === question.correct
-
     setIsCorrect(correct)
     setShowResult(true)
-
     if (correct) {
       playSound("win")
       const pointsEarned = question.points + timeLeft * 2
       setScore(score + pointsEarned)
       setCorrectAnswers(correctAnswers + 1)
-    } else {
-      playSound("lose")
-    }
-
-    setTimeout(() => {
-      moveToNextQuestion()
-    }, 2000)
+    } else playSound("lose")
+    setTimeout(() => moveToNextQuestion(), 2000)
   }
 
   const moveToNextQuestion = () => {
@@ -243,18 +231,13 @@ export default function QuizGame({ user, profile }) {
       setSelectedAnswer(null)
       setShowResult(false)
       setTimeLeft(15)
-    } else {
-      finishGame()
-    }
+    } else finishGame()
   }
 
   const finishGame = async () => {
     setGameState("finished")
-
-    const expEarned = correctAnswers * 10 // 10 EXP per correct answer
+    const expEarned = correctAnswers * 10
     const supabase = createClient()
-
-    // Use the award_game_rewards function
     await supabase.rpc("award_game_rewards", {
       p_user_id: user.id,
       p_game_type: "quiz",
@@ -269,9 +252,8 @@ export default function QuizGame({ user, profile }) {
     router.push("/dashboard")
   }
 
-  if (shuffledQuestions.length === 0) {
+  if (shuffledQuestions.length === 0)
     return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-  }
 
   const question = shuffledQuestions[currentQuestion]
 
@@ -366,29 +348,33 @@ export default function QuizGame({ user, profile }) {
               </CardHeader>
               <CardContent className="space-y-3 md:space-y-4">
                 {question.options.map((option, index) => {
-                  let buttonClass = "bg-slate-800/50 hover:bg-slate-700/50 text-slate-100 border-slate-700/50"
+                  let buttonClass =
+                    "bg-slate-800/50 hover:bg-slate-700/50 text-slate-100 border-slate-700/50"
 
                   if (showResult) {
-                    if (index === question.correct) {
+                    if (index === question.correct)
                       buttonClass = "bg-green-500/20 border-green-500 text-green-400"
-                    } else if (index === selectedAnswer) {
+                    else if (index === selectedAnswer)
                       buttonClass = "bg-red-500/20 border-red-500 text-red-400"
-                    }
-                  } else if (selectedAnswer === index) {
+                  } else if (selectedAnswer === index)
                     buttonClass = "bg-pink-500/20 border-pink-500 text-pink-400"
-                  }
 
                   return (
                     <Button
                       key={index}
                       onClick={() => handleAnswerSelect(index)}
                       disabled={showResult || selectedAnswer !== null}
-                      className={`w-full py-4 md:py-6 text-sm md:text-lg justify-start text-left ${buttonClass} transition-all duration-300 h-auto min-h-[3rem] md:min-h-[4rem]`}
                       variant="outline"
                       onMouseEnter={() => playSound("hover")}
+                      className={`w-full text-left px-4 py-3 md:py-5 rounded-lg border ${buttonClass} 
+                        transition-all duration-300 flex items-start gap-3 break-words whitespace-normal
+                        leading-relaxed text-sm sm:text-base md:text-lg h-auto min-h-[56px] sm:min-h-[64px]`}
                     >
-                      <span className="mr-2 md:mr-4 font-bold flex-shrink-0">{String.fromCharCode(65 + index)}.</span>
-                      <span className="flex-1 text-pretty leading-relaxed pr-2">{option}</span>
+                      <span className="font-semibold shrink-0">
+                        {String.fromCharCode(65 + index)}.
+                      </span>
+                      <span className="flex-1 break-words">{option}</span>
+
                       {showResult && index === question.correct && (
                         <CheckCircle2 className="w-4 md:w-5 h-4 md:h-5 ml-auto flex-shrink-0 text-green-400" />
                       )}
@@ -409,8 +395,14 @@ export default function QuizGame({ user, profile }) {
                   }`}
                 >
                   <CardContent className="p-4 md:p-6">
-                    <p className={`text-xl md:text-2xl font-bold ${isCorrect ? "text-green-400" : "text-red-400"}`}>
-                      {isCorrect ? `+${question.points + timeLeft * 2} Points!` : "Incorrect"}
+                    <p
+                      className={`text-xl md:text-2xl font-bold ${
+                        isCorrect ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      {isCorrect
+                        ? `+${question.points + timeLeft * 2} Points!`
+                        : "Incorrect"}
                     </p>
                   </CardContent>
                 </Card>
@@ -426,7 +418,9 @@ export default function QuizGame({ user, profile }) {
                 <div className="mx-auto mb-4 w-16 md:w-20 h-16 md:h-20 rounded-full bg-cyan-500/20 flex items-center justify-center">
                   <Trophy className="w-10 md:w-12 h-10 md:h-12 text-cyan-400" />
                 </div>
-                <CardTitle className="text-2xl md:text-3xl font-bold text-cyan-400 mb-2">Quiz Complete!</CardTitle>
+                <CardTitle className="text-2xl md:text-3xl font-bold text-cyan-400 mb-2">
+                  Quiz Complete!
+                </CardTitle>
                 <CardDescription className="text-slate-300 text-base md:text-lg">
                   You answered {correctAnswers} out of {shuffledQuestions.length} questions correctly
                 </CardDescription>

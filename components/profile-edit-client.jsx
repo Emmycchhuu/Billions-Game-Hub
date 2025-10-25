@@ -28,8 +28,9 @@ export default function ProfileEditClient({ user, profile }) {
   const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatar_url || avatarOptions[0])
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadedImage, setUploadedImage] = useState(null)
 
-<<<<<<< HEAD
   const handleFileSelect = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -52,7 +53,6 @@ export default function ProfileEditClient({ user, profile }) {
     try {
       const supabase = createClient()
 
-      // Check if bucket exists
       const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
       if (bucketError) {
         console.error("Error checking buckets:", bucketError)
@@ -99,8 +99,6 @@ export default function ProfileEditClient({ user, profile }) {
     }
   }
 
-=======
->>>>>>> f592035ea2e8db219b52c855dd87cdd8a7c97fcd
   const handleSave = async () => {
     if (!username.trim()) {
       setMessage("Username cannot be empty")
@@ -175,8 +173,11 @@ export default function ProfileEditClient({ user, profile }) {
                   </span>
                 )}
               </CardTitle>
-              <CardDescription className="text-slate-400">Update your username and profile picture</CardDescription>
+              <CardDescription className="text-slate-400">
+                Update your username and profile picture
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-8">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-slate-300">
@@ -194,7 +195,7 @@ export default function ProfileEditClient({ user, profile }) {
               <div className="space-y-4">
                 <Label className="text-slate-300">Profile Picture</Label>
 
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
                   <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/50">
                     <Image
                       src={selectedAvatar || "/images/avatar-1.jpeg"}
@@ -207,6 +208,14 @@ export default function ProfileEditClient({ user, profile }) {
                       }}
                     />
                   </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="text-slate-400 text-sm"
+                    disabled={isUploading}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -226,12 +235,7 @@ export default function ProfileEditClient({ user, profile }) {
                             : "hover:scale-105 opacity-70 hover:opacity-100"
                         }`}
                       >
-                        <Image
-                          src={avatar}
-                          alt={`Avatar ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
+                        <Image src={avatar} alt={`Avatar ${index + 1}`} fill className="object-cover" />
                       </button>
                     ))}
                   </div>
